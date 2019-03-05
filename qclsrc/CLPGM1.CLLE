@@ -1,0 +1,28 @@
+/* ================================================================ */
+/* (C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                     */
+/*                                                                  */
+/* ALL RIGHTS RESERVED                                              */
+/*                                                                  */
+/* THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED      */
+/* WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.                */
+/* NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                     */
+/* COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF               */
+/* UNICOM SYSTEMS, INC.                                             */
+/* ================================================================ */
+
+             PGM        PARM(&PARM1)
+
+             COPYRIGHT  TEXT('(C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, +
+                          INC.')
+
+             DCL        VAR(&PARM1) TYPE(*CHAR) LEN(10)
+
+/* TST 1.111A */
+
+             SNDPGMMSG  MSG('Added at 1.111A - parameter' *BCAT &PARM1)
+
+/* TST 1.112A */
+
+             SNDPGMMSG  MSG('Added at 1.112A - parameter' *BCAT &PARM1)
+
+             ENDPGM

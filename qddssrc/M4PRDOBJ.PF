@@ -1,0 +1,39 @@
+      * =========================================================== *
+      * Ÿ 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                  *
+      *                                                             *
+      * ALL RIGHTS RESERVED                                         *
+      *                                                             *
+      * THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED *
+      * WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.           *
+      * NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                *
+      * COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF          *
+      * UNICOM SYSTEMS, INC.                                        *
+      * =========================================================== *
+
+      * =============================================================
+      *                          DESCRIPTION
+      * Text         : Product objects to be initialised
+      * Author       : Paul Wren
+      * Date         : 8th May 2009
+      * Field Prefix : XX
+      * Options      : CRTPF non_default keywords
+      * ..............................................................
+      *                          MAINTENANCE
+      * Programmer :
+      * Date       :
+      * Amendment  :
+      * =============================================================
+      * File level keywords
+      * ..............................................................
+     A          R M4PRDOBJR                 TEXT('Objects')
+      * ..............................................................
+
+     A            XXNAME        10A         TEXT('Object Name or *ALL')
+     A            XXTYPE        10A         TEXT('Object Type')
+     A            XXOWNR        10A         TEXT('Owner or blanks')
+     A            XXINST         1A         TEXT('Install Y/N')
+     A            XXADPT         1A         TEXT('Adopt Owner Y/N')
+
+     A          K XXNAME
+     A          K XXTYPE
+      * ==============================================================

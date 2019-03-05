@@ -1,0 +1,57 @@
+/* ================================================================ */
+/* (C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                     */
+/*                                                                  */
+/* ALL RIGHTS RESERVED                                              */
+/*                                                                  */
+/* THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED      */
+/* WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.                */
+/* NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                     */
+/* COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF               */
+/* UNICOM SYSTEMS, INC.                                             */
+/* ================================================================ */
+
+             PGM        PARM(&FEAT)
+
+             COPYRIGHT  TEXT('(C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, +
+                          INC.')
+
+             DCL        VAR(&FEAT) TYPE(*CHAR) LEN(5)
+             DCL        VAR(&RTNVERS) TYPE(*CHAR) LEN(4)
+             DCL        VAR(&STATUS) TYPE(*CHAR) LEN(7)
+             DCL        VAR(&DAYS) TYPE(*DEC) LEN(5 0)
+             DCL        VAR(&DAYSX) TYPE(*CHAR) LEN(5)
+             DCL        VAR(&CODE) TYPE(*CHAR) LEN(16)
+             DCL        VAR(&EXPIRY) TYPE(*CHAR) LEN(8)
+             DCL        VAR(&MODEL) TYPE(*CHAR) LEN(4)
+             DCL        VAR(&SRLNBR) TYPE(*CHAR) LEN(8)
+             DCL        VAR(&FEATURES) TYPE(*CHAR) LEN(16)
+             DCL        VAR(&TEXT) TYPE(*CHAR) LEN(29)
+             DCL        VAR(&MAXCLNT) TYPE(*CHAR) LEN(4)
+             DCL        VAR(&LICTYP) TYPE(*CHAR) LEN(1)
+             DCL        VAR(&RLSLVL) TYPE(*CHAR) LEN(8)
+
+             M4SYS/M4CHKAUT PROD('TST') FEATURE(&FEAT) RTNVERS(&RTNVERS) +
+                          STATUS(&STATUS) DAYS(&DAYS) AUTHCD(&CODE) +
+                          EXPDATE(&EXPIRY) MODEL(&MODEL) SRLNBR(&SRLNBR) +
+                          FEATURES(&FEATURES) TEXT(&TEXT) +
+                          MAXCLNT(&MAXCLNT) LICTYP(&LICTYP) +
+                          RLSLVL(&RLSLVL) VERS('1.1')
+
+             CHGVAR     VAR(&DAYSX) VALUE(&DAYS)
+
+             SNDPGMMSG  MSG('Feature :' *BCAT &FEAT) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('RtnVers :' *BCAT &RTNVERS) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Status  :' *BCAT &STATUS) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Days    :' *BCAT &DAYSX) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Code    :' *BCAT &CODE) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Expires :' *BCAT &EXPIRY) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Model   :' *BCAT &MODEL) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Serial  :' *BCAT &SRLNBR) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Features:' *BCAT &FEATURES) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Text    :' *BCAT &TEXT) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Clients :' *BCAT &MAXCLNT) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Key type:' *BCAT &LICTYP) MSGTYPE(*COMP)
+             SNDPGMMSG  MSG('Release :' *BCAT &RLSLVL) MSGTYPE(*COMP)
+
+             RETURN
+             ENDPGM

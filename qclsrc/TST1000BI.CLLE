@@ -1,0 +1,210 @@
+/* ======================================================================== */
+/* (C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                             */
+/*                                                                          */
+/* ALL RIGHTS RESERVED                                                      */
+/*                                                                          */
+/* THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED              */
+/* WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.                        */
+/* NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                             */
+/* COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF                       */
+/* UNICOM SYSTEMS, INC.                                                     */
+/* ======================================================================== */
+
+/*H: ====================================================================== */
+/*H:                            DESCRIPTION                                 */
+/*T: Title    : Skeleton PTF install program                                */
+/*H: Author   : Paul Wren                                                   */
+/*H: Date     :                                                             */
+/*H: Synopsis : Sample PTF install program.                                 */
+/*H:            Each PTF install can be performed in three phase :-         */
+/*H:                                                                        */
+/*H:                 *PRE      Pre install checks. If any errors occur      */
+/*H:                           during this phase the PTF will not be marked */
+/*H:                           in error. Processing of PTF's will fail.     */
+/*H:                                                                        */
+/*H:                           Perform all steps in this phase that can be  */
+/*H:                           re-run without causing any error.            */
+/*H:                                                                        */
+/*H:                           This could include the step to restore       */
+/*H:                           objects.                                     */
+/*H:                                                                        */
+/*H:                 *INSTALL  Install fix objects. If any errors occur     */
+/*H:                           during this phase the PTF is marked in error */
+/*H:                                                                        */
+/*H:                           Perform all steps in this phase that cannot  */
+/*H:                           be re-run.                                   */
+/*H:                                                                        */
+/*H:                 *POST     Perform any post install actions and tidy up */
+/*H:                           If any errors occur during this phase the    */
+/*H:                           PTF is marked in error                       */
+/*H:                                                                        */
+/*H:                           During this phase ensure that any internal   */
+/*H:                           product level is updated according to the    */
+/*H:                           new level parameter passed to the install    */
+/*H:                           program.                                     */
+/*H:                                                                        */
+/*H:            The &STEP parameter must be incremented after each major    */
+/*H:            step in each phase to enable the support team to            */
+/*H:            pinpoint the cause of the problem and advise the customer   */
+/*H:            on corrective action to be taken.                           */
+/*H:                                                                        */
+/*H:            The PTF cover letter must have a section as indicated in    */
+/*H:            sample cover letter that provides a summary of the PTF      */
+/*H:            install process for each phase and step.                    */
+/*H:                                                                        */
+/*H:            Always monitor for expected error conditions and handle     */
+/*H:            them within the install program. Assume nothing!            */
+/*H:                                                                        */
+/*H:            If the PTF installs successfully then the &PHASE parameter  */
+/*H:            must be set to *END and the &STEP parameter to zero         */
+/*H:            before returning to the caller.                             */
+/*H:                                                                        */
+/*H:            If the &PHASE parameter is notset to *PRE, *INSTALL, *POST  */
+/*H:            or *END then an unexpected error will be reported by the    */
+/*H:            caller. PTF processing will fail.                           */
+/*H:                                                                        */
+/*H:            Always use the &APYLIB parameter as the library name to     */
+/*H:            perform operations upon. The PTF may be being applied to    */
+/*H:            either the installed product library or the distribution    */
+/*H:            library. Do not hard code these primary library names.      */
+/*H:                                                                        */
+/*H:            If the product has more than one product library then       */
+/*H:            use the &APYTYP parameter to determine which libraries      */
+/*H:            should be updated. &APYTYP will be set to *PROD or          */
+/*H:            *DISTRIB.                                                   */
+/*H:                                                                        */
+/*M: ====================================================================== */
+
+             PGM        PARM(&PRODCODE  /* Produt code                   */  +
+                             &VERSION   /* Product version               */  +
+                             &CURLVL    /* Current product level         */  +
+                             &NEWLVL    /* New product level             */  +
+                             &APYLIB    /* Apply to library              */  +
+                             &PTF       /* PTF name                      */  +
+                             &APYTYP    /* Apply type *PROD or *DISTRIB  */  +
+                             &PHASE     /* Install phase indicator       */  +
+                             &STEP)     /* Install phase step            */
+
+             COPYRIGHT  TEXT('(C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, +
+                          INC.')
+
+/* ========================================================================= */
+/* Parameter variable definitions                                            */
+/* ========================================================================= */
+
+             DCL        VAR(&PRODCODE) TYPE(*CHAR) LEN(3)
+             DCL        VAR(&VERSION) TYPE(*CHAR) LEN(4)
+             DCL        VAR(&CURLVL) TYPE(*CHAR) LEN(7)
+             DCL        VAR(&NEWLVL) TYPE(*CHAR) LEN(7)
+             DCL        VAR(&APYLIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&PTF) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&APYTYP) TYPE(*CHAR) LEN(8)
+             DCL        VAR(&PHASE) TYPE(*CHAR) LEN(8)
+             DCL        VAR(&STEP) TYPE(*DEC) LEN(2 0)
+
+/* ========================================================================= */
+/* Variable definitions                                                      */
+/* ========================================================================= */
+
+       /* Subsystem API format */
+             DCL        VAR(&SBSINFO) TYPE(*CHAR) LEN(38)
+
+       /* API error code */
+             DCL        VAR(&ERRC) TYPE(*CHAR) LEN(16) +
+                          VALUE(X'00000010000000000000000000000000')
+
+             DCL        VAR(&SBSNAME) TYPE(*CHAR) LEN(20)
+
+       /* Product info. space name */
+             DCL        VAR(&PRDSPC) TYPE(*CHAR) LEN(20)
+
+/* ========================================================================= */
+/* Initialisation                                                            */
+/* ========================================================================= */
+
+/* ......................................................................... */
+/* Global monitor message for untrapped errors                               */
+
+             MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ERROR))
+
+/* ========================================================================= */
+/* Main Processing                                                           */
+/* ========================================================================= */
+
+
+/* ......................................................................... */
+/* Pre install validation                                                    */
+/* Perform any validation checks that may prevent the PTF from installing    */
+/* successfully. If the install program returns to the calling program with  */
+/* the phase indicator set to *PRE then the PTF will not be marked as failed */
+/* Increment the &STEP parameter after each major pre-install step.          */
+/*                                                                           */
+             /* Set PTF phase */
+             CHGVAR     VAR(&PHASE) VALUE('*PRE    ')
+
+/* ......................................................................... */
+/* Check object locks                                                        */
+             CHGVAR     VAR(&STEP) VALUE(1)
+
+
+/* ......................................................................... */
+/* Any other checks ...                                                      */
+             CHGVAR     VAR(&STEP) VALUE(&STEP + 1)
+
+/*                                                                           */
+/* End of pre install validation                                             */
+/* ......................................................................... */
+
+
+/* ......................................................................... */
+/* PTF install steps                                                         */
+/* Perform all steps required to install the PTF.                            */
+/* Increment the &STEP parameter after each major install step.              */
+/*                                                                           */
+             /* Set install phase */
+             CHGVAR     VAR(&PHASE) VALUE('*INSTALL')
+
+             /* Set phase step */
+             CHGVAR     VAR(&STEP) VALUE(1)
+
+             RSTOBJ     OBJ(*ALL) SAVLIB(&PTF) DEV(*SAVF) +
+                          OBJTYPE(*ALL) SAVF(&PTF) FILEMBR((*ALL +
+                          *ALL)) MBROPT(*ALL) ALWOBJDIF(*NONE) +
+                          RSTLIB(&APYLIB)
+/*                                                                           */
+/* End of PTF install steps                                                  */
+/* ......................................................................... */
+
+/* ......................................................................... */
+/* Post install processing steps                                             */
+/* Perform any post install steps required after the PTF has been installed  */
+/* such as copying customer data or deleting temporary objects etc.          */
+/* Increment the STEP parameter after each major post install step.          */
+/*                                                                           */
+             /* Set PTF phase */
+             CHGVAR     VAR(&PHASE) VALUE('*POST     ')
+
+             CHGVAR     VAR(&STEP) VALUE(1)
+/*                                                                           */
+/* End of post install processing steps                                      */
+/* ......................................................................... */
+
+             CHGVAR     VAR(&PHASE) VALUE('*END    ')
+             CHGVAR     VAR(&STEP) VALUE(0)
+
+             GOTO       CMDLBL(END)
+
+/* ========================================================================= */
+/* Standard unexpected error handling                                        */
+/* ========================================================================= */
+ ERROR:
+
+/* Move messages to caller. Convert ESCAPE to DIAG                           */
+             CALL       PGM(QMHMOVPM) PARM('    ' '*DIAG     +
+                          *ESCAPE   *NOTIFY   ' X'00000003' +
+                          '*         ' X'00000001' +
+                          X'00000010000000004040404040404040')
+
+/* ========================================================================= */
+END:         RCLRSC
+             ENDPGM

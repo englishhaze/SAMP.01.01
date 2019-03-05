@@ -1,0 +1,339 @@
+/* ================================================================ */
+/* (C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                     */
+/*                                                                  */
+/* ALL RIGHTS RESERVED                                              */
+/*                                                                  */
+/* THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED      */
+/* WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.                */
+/* NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                     */
+/* COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF               */
+/* UNICOM SYSTEMS, INC.                                             */
+/* ================================================================ */
+
+ /*****************************************************************************/
+ /*H: TITLE  ADDMSGF - General Utility to add messages to a message file      */
+ /*===========================================================================*/
+ /*H: System     : Test product                                               */
+ /*H: Programmer : Paul Wren                                                  */
+ /*H: Date       : May 2010                                                   */
+ /*H:                                                                         */
+ /*H: Function   : This program will firstly delete the message file          */
+ /*H:              and then recreate it thus clearing all messages            */
+ /*H:                        Messages will then be added in the order         */
+ /*H:              that they exist in the source below.                       */
+ /*H:                                                                         */
+ /*H:              This is the only way messages should be added to           */
+ /*H:              a message file.                                            */
+ /*H:                                                                         */
+ /*===========================================================================*/
+ /*M:                       AMENDMENTS                                        */
+ /*M: Version    :                    Fault report #:                         */
+ /*M: Date       :                    Programmer    :                         */
+ /*M: Amendment  :                                                            */
+ /*===========================================================================*/
+ /*M: Version    :                    Fault report #:                         */
+ /*M: Date       :                    Programmer    :                         */
+ /*M: Amendment  :                                                            */
+ /*===========================================================================*/
+             PGM        (&msgfile &text)
+
+             COPYRIGHT  TEXT('(C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, +
+                          INC.')
+
+             DCL        VAR(&MSGFILE) TYPE(*CHAR) LEN(20)
+             DCL        VAR(&MSGF) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&MSGFLIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&TEXT) TYPE(*CHAR) LEN(50)
+
+/* ......................................................................... */
+/* Variables used for standard error handling routine                        */
+/* ......................................................................... */
+             DCL        VAR(&ERRORSW) TYPE(*LGL)
+             DCL        VAR(&ERRMSGID) TYPE(*CHAR) LEN(7)
+             DCL        VAR(&ERRMSGDTA) TYPE(*CHAR) LEN(100)
+             DCL        VAR(&ERRMSGF) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&ERRMSGFLIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&KEYVAR) TYPE(*CHAR) LEN(4)
+
+/* ......................................................................... */
+/* Global montor message for untrapped errors                                */
+             MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ERROR))
+/* ......................................................................... */
+
+             CHGVAR     VAR(&MSGF) VALUE(%SST(&MSGFILE 1 10))
+             CHGVAR     VAR(&MSGFLIB) VALUE(%SST(&MSGFILE 11 10))
+
+/* Delete and recreate message file */
+
+             DLTMSGF    MSGF(&msgflib/&msgf)
+             MONMSG     MSGID(CPF0000)
+
+             CRTMSGF    MSGF(&msgflib/&msgf) TEXT(&Text)
+
+/* ......................................................................... */
+/* AutoConsole Event Messages                                                */
+/* ......................................................................... */
+
+             ADDMSGD    MSGID(EVT0000) MSGF(&MSGFLIB/&MSGF) MSG('Table &1, +
+                          row &2') SECLVL('Test event supporting message. +
+                          Table &1, row &2, event type &3, condition seq. +
+                          &4, set &5.') FMT((*CHAR 10) (*CHAR 4) (*CHAR +
+                          10) (*BIN 4) (*CHAR 10))
+
+             ADDMSGD    MSGID(EVT0001) MSGF(&MSGFLIB/&MSGF) MSG('Subsystem +
+                          &7 in library &8 generated an event.') +
+                          SECLVL('Event table &1, row number &2, event +
+                          type &3, condition seq. &4, set &5 generated an +
+                          event.  The required subsystem name is &7 in +
+                          library &8. The actual subsystem name is &9 in +
+                          library &10. The required subsystem status is +
+                          &11. The actual subsystem status is &12. The +
+                          required number of active jobs is &13 &14. The +
+                          actual number of active jobs &15.') FMT((*CHAR +
+                          10) (*CHAR 4) (*CHAR 10) (*BIN 4) (*CHAR 10) +
+                          (*BIN 4) (*CHAR 10) (*CHAR 10) (*CHAR 10) (*CHAR +
+                          10) (*CHAR 9) (*CHAR 9) (*CHAR 3) (*BIN 4) (*BIN +
+                          4))
+
+             ADDMSGD    MSGID(EVT0002) MSGF(&MSGFLIB/TSTMSG) MSG('Job +
+                          &7 generated an event.') SECLVL('Event table &1, +
+                          row number &2, event type &3, condition seq. &4, +
+                          set &5 generated an event for Jobs with name +
+                          like &7, user like &8, status like &9 and job +
+                          type like &10. Required number of jobs that meet +
+                          the criteria should be &11 &12. Actual number of +
+                          jobs is &13. Required CPU milliseconds used is +
+                          &14 &15. Actual CPU milliseconds used is &16. +
+                          Required subsystem name is &17. Actual subsystem +
+                          name is &18. Required average response time is +
+                          &19 &20. Actual average response time is &21. +
+                          Required completion status is &22. Actual +
+                          completion status is &23. Actual job name is +
+                          &24. Actual user name is &25. Actual job status +
+                          is &26. Actual job type is &27.') FMT((*CHAR 10) +
+                          (*CHAR 4) (*CHAR 10) (*BIN 4) (*CHAR 10) (*BIN +
+                          4) (*CHAR 10) (*CHAR 10) (*CHAR 10) (*CHAR 10) +
+                          (*CHAR 3) (*BIN 4) (*BIN 4) (*CHAR 3) (*UBIN 8) +
+                          (*UBIN 8) (*CHAR 10) (*CHAR 10) (*CHAR 3) (*BIN +
+                          4) (*BIN 4) (*CHAR 9) (*CHAR 9) (*CHAR 10) +
+                          (*CHAR 10) (*CHAR 10) (*CHAR 10))
+
+             ADDMSGD    MSGID(EVT0003) MSGF(&MSGFLIB/TSTMSG) MSG('Job +
+                          queue &7 in library &8 generated an event.') +
+                          SECLVL('Event table &1, row number &2, event +
+                          type &3, condition seq. &4, set &5 generated an +
+                          event. The required job queue name is &7 in +
+                          library &8. The actual job queue name is &9 in +
+                          library &10. The required status is &11. The +
+                          actual status was &12. The required number of +
+                          jobs with status &13 at priority &14 is &15 &16. +
+                          The actual number of job is &17. The required +
+                          subsystem is &18. The actual subsystem is &19.') +
+                          FMT((*CHAR 10) (*CHAR 4) (*CHAR 10) (*BIN 4) +
+                          (*CHAR 10) (*BIN 4) (*CHAR 10) (*CHAR 10) (*CHAR +
+                          10) (*CHAR 10) (*CHAR 9) (*CHAR 9) (*CHAR 4) +
+                          (*BIN 2) (*CHAR 3) (*BIN 4) (*BIN 4) (*CHAR 10) +
+                          (*CHAR 10))
+
+             ADDMSGD    MSGID(EVT0004) MSGF(&MSGFLIB/TSTMSG) +
+                          MSG('Object &7 in libray &8 of type &11, status +
+                          &13, size &19 generated an event.') +
+                          SECLVL('Event table &1, row number &2, event +
+                          type &3, condition seq. &4, set &5 generated an +
+                          event. The required object name is &7 in library +
+                          &8. The actual object name is &9 in library &10. +
+                          The required object type is &11. The actual +
+                          object type is &12. The object existence +
+                          attribute is &13. The required object lock is +
+                          &14. The required object owner is &15. The +
+                          actual object owner is &16. The required object +
+                          size is &17 &18K. The actual object size is +
+                          &19K. Required ASP device &20 actual ASP device +
+                          &21.') FMT((*CHAR 10) (*CHAR 4) (*CHAR 10) (*BIN +
+                          4) (*CHAR 10) (*BIN 4) (*CHAR 10) (*CHAR 10) +
+                          (*CHAR 10) (*CHAR 10)(*CHAR 10) (*CHAR 10) +
+                          (*CHAR 4) (*CHAR 7) (*CHAR 10) (*CHAR 10) (*CHAR +
+                          3) (*BIN 4) (*BIN 4) (*CHAR 10) (*CHAR 10))
+
+             ADDMSGD    MSGID(EVT0005) MSGF(&MSGFLIB/TSTMSG) +
+                          MSG('Configuration device &7 generated an +
+                          event.') SECLVL('Event table &1, row number &2, +
+                          event type &3, condition seq. &4, set &5 +
+                          generated an event. The required configuration +
+                          device is &7. The actual configuration device is +
+                          is &8. The configuration device type is &9. The +
+                          required status values are &10. The actual +
+                          status is &11 &12') FMT((*CHAR 10) (*CHAR 4) +
+                          (*CHAR 10) (*BIN 4) (*CHAR 10) (*BIN 4) (*CHAR +
+                          10) (*CHAR 10) (*CHAR 10) (*CHAR 60) (*BIN 4) +
+                          (*CHAR 20))
+
+             ADDMSGD    MSGID(EVT0006) MSGF(&MSGFLIB/TSTMSG) MSG('Ping +
+                          of remote system &7 internet address &8 +
+                          generated an event.') SECLVL('Event table &1, +
+                          row number &2, event type &3, condition seq. &4, +
+                          set &5 generated an event condition for remote +
+                          system &7 internet address &8. &9 packets were +
+                          sent. The required response rate is &10. The +
+                          actual response rate was &11. The required +
+                          response time is &12. The actual response time +
+                          was &13. Success rate was &14') FMT((*CHAR 10) +
+                          (*CHAR 4) (*CHAR 10) (*BIN 4) (*CHAR 10) (*BIN +
+                          4) (*CHAR 256) (*CHAR 64) (*BIN 2) (*BIN 4) +
+                          (*BIN 4) (*BIN 4) (*BIN 4) (*BIN 4))
+
+             ADDMSGD    MSGID(EVT0007) MSGF(&MSGFLIB/TSTMSG) MSG('Data +
+                          area &7 in library &8 type &11 generated an +
+                          event.') SECLVL('Event table &1, row number &2, +
+                          event type &3, condition seq. &4, set &5 +
+                          generated an event. The required data area name +
+                          is &7 in library &8. The actual data area name +
+                          is &9 in library &10. The required data area +
+                          type is &11. The actual data area type is &12. +
+                          Conditional operator is &13. First 100 bytes of +
+                          required value is &14. First 100 bytes of actual +
+                          value is &15. Required ASP device is &16. The +
+                          actual ASP device is &17') FMT((*CHAR 10) (*CHAR +
+                          4) (*CHAR 10) (*BIN 4) (*CHAR 10) (*BIN 4) +
+                          (*CHAR 10) (*CHAR 10) (*CHAR 10) (*CHAR 10) +
+                          (*CHAR 10) (*CHAR 10) (*CHAR 3) (*CHAR 100) +
+                          (*CHAR 100) (*CHAR 10) (*CHAR 10))
+
+             ADDMSGD    MSGID(EVT0008) MSGF(&MSGFLIB/TSTMSG) MSG('Spool +
+                          file &7 generated an event.') SECLVL('Event +
+                          table &1, row number &2, event type &3, +
+                          condition seq. &4, set &5 generated an event. +
+                          The required spool file name is &7. The actual +
+                          spool file name is &8. The required output queue +
+                          name is &9 in library &10. The actual output +
+                          queue name is &11 in library &12. The required +
+                          user profile is &13. Actual user profile is &14. +
+                          The required job name is &15. Actual job name is +
+                          &16. The required user data is &17. The actual +
+                          user data is &18. Required form type &19. Actual +
+                          form type &20. The required status is &21. The +
+                          actual status is &22. Required pages &23 &24. +
+                          Actual pages &25. Required ASP device &26. +
+                          Actual ASP device &27') FMT((*CHAR 10) (*CHAR 4) +
+                          (*CHAR 10) (*BIN 4) (*CHAR 10) (*BIN 4) (*CHAR +
+                          10) (*CHAR 10) (*CHAR 10) (*CHAR 10) (*CHAR 10) +
+                          (*CHAR 10) (*CHAR 10) (*CHAR 10) (*CHAR 10) +
+                          (*CHAR 10) (*CHAR 10) (*CHAR 10) (*CHAR 10) +
+                          (*CHAR 10) (*CHAR 110) (*CHAR 10) (*CHAR 3) +
+                          (*BIN 4) (*BIN 4) (*CHAR 10) (*CHAR 10))
+
+             ADDMSGD    MSGID(EVT0009) MSGF(&MSGFLIB/TSTMSG) +
+                          MSG('Network connection test to CP name &7 +
+                          network Id. &8 generated an event.') +
+                          SECLVL('Event table &1, row number &2, event +
+                          type &3, condition seq. &4, set &5 generated an +
+                          event condition for CP name &7 network Id. &8. +
+                          APPN mode &9. Connection status required is &10 +
+                          the actual connection status is &11. Application +
+                          &12 required status is &13 the actual status was +
+                          &14. Exception id. was &15. Reply was &16') +
+                          FMT((*CHAR 10) (*CHAR 4) (*CHAR 10) (*BIN 4) +
+                          (*CHAR 10) (*BIN 4) (*CHAR 8) (*CHAR 8) (*CHAR +
+                          8) (*CHAR 4) (*CHAR 4)(*CHAR 8) (*CHAR 4) (*CHAR +
+                          4) (*CHAR 7) (*CHAR 10))
+
+             ADDMSGD    MSGID(EVT0010) MSGF(&MSGFLIB/TSTMSG) MSG('IFS +
+                          object &7 generated an event.') SECLVL('Event +
+                          table &1, row number &2, event type &3, +
+                          condition seq. &4, set &5 generated an event for +
+                          IFS object &7.') FMT((*CHAR 10) (*CHAR 4) (*CHAR +
+                          10) (*BIN 4) (*CHAR 10) (*BIN 4) (*CHAR *VARY 2))
+
+             ADDMSGD    MSGID(EVT0012) MSGF(&MSGFLIB/TSTMSG) +
+                          MSG('Output queue &7 in library &8 generated an +
+                          event.') SECLVL('Event table &1, row number &2, +
+                          event type &3, condition seq. &4, set &5 +
+                          generated an event. The required output queue is +
+                          &7 in library &8. The actual output queue is &9 +
+                          in library &10. The required status is &11. The +
+                          actual status was &12. The required number of +
+                          files is &13 &14. The actual number of files is +
+                          &15. The required writer status is &16. The +
+                          actual writer status is &17. Required ASP device +
+                          is &18. The actual ASP device is &19') +
+                          FMT((*CHAR 10) (*CHAR 4) (*CHAR 10) (*BIN 4) +
+                          (*CHAR 10) (*BIN 4) (*CHAR 10) (*CHAR 10) (*CHAR +
+                          10) (*CHAR 10) (*CHAR 9) (*CHAR 9) (*CHAR 3) +
+                          (*BIN 4) (*BIN 4) (*CHAR 6) (*CHAR 6)(*CHAR 10) +
+                          (*CHAR 10))
+
+             ADDMSGD    MSGID(EVT0099) MSGF(&MSGFLIB/&MSGF) MSG('User +
+                          program &7 in library &8 returned result code +
+                          &12.') SECLVL('Event table &1, row number &2, +
+                          event type &3, condition seq. &4, set &5 +
+                          generated an event condition for user program &7 +
+                          in library &8. The input parameter was ''&9''. +
+                          The required return value is &10 &11. The actual +
+                          return value from the program was &12.') +
+                          FMT((*CHAR 10) (*CHAR 4) (*CHAR 10) (*BIN 4) +
+                          (*CHAR 10) (*BIN 4) (*CHAR 10) (*CHAR 10) (*CHAR +
+                          50) (*CHAR 3) (*BIN 4) (*BIN 4))
+
+
+             ADDMSGD    MSGID(EVT9997) MSGF(&MSGFLIB/&MSGF) MSG('Row +
+                          actions triggered for row &2 in table &1.') +
+                          SECLVL('Event table &1, row number &2 actions +
+                          have been triggered because one or more event +
+                          conditions in the row were not satisfied.') +
+                          FMT((*CHAR 10) (*CHAR 4) (*CHAR 10) (*BIN 4) +
+                          (*CHAR 10))
+
+
+             ADDMSGD    MSGID(EVT9998) MSGF(&MSGFLIB/&MSGF) MSG('Table +
+                          actions triggered for table &1.') SECLVL('Event +
+                          table &1 actions have been triggered.') +
+                          FMT((*CHAR 10) (*CHAR 4) (*CHAR 10) (*BIN 4) +
+                          (*CHAR 10))
+
+
+             ADDMSGD    MSGID(EVT9999) MSGF(&MSGFLIB/&MSGF) MSG('System +
+                          actions triggered.') SECLVL('System level +
+                          actions have been triggered.') FMT((*CHAR 10) +
+                          (*CHAR 4) (*CHAR 10) (*BIN 4) (*CHAR 10))
+
+/* ========================================================================= */
+
+             SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA('Message +
+                          file' *BCAT &MSGFLIB *CAT '/' *CAT &MSGF +
+                          *BCAT ' created OK') MSGTYPE(*COMP)
+             GOTO END
+
+/* ========================================================================= */
+/* Standard error handling                                                   */
+/* ========================================================================= */
+ ERROR:
+             IF         COND(&ERRORSW) THEN(SNDPGMMSG MSGID(CPF9999) +
+                          MSGF(QCPFMSG) MSGTYPE(*ESCAPE)) /* Func +
+                          chk */
+/* ......................................................................... */
+/* Set to fail if error occurs while handling an error!                      */
+             CHGVAR     VAR(&ERRORSW) VALUE('1')
+
+/* ......................................................................... */
+/* Retrieve *DIAG messages                                                   */
+ DIAG:       RCVMSG     MSGTYPE(*DIAG) RMV(*NO) KEYVAR(&KEYVAR) +
+                          MSGDTA(&ERRMSGDTA) MSGID(&ERRMSGID) +
+                          MSGF(&ERRMSGF) SNDMSGFLIB(&ERRMSGFLIB)
+             IF         (&KEYVAR *EQ '    ') GOTO ESCAPE
+             RMVMSG     MSGKEY(&KEYVAR)
+             SNDPGMMSG  MSGID(&ERRMSGID) MSGF(&ERRMSGFLIB/&ERRMSGF) +
+                          MSGDTA(&ERRMSGDTA) MSGTYPE(*DIAG)
+             GOTO       CMDLBL(DIAG)
+
+ /* ......................................................................... */
+ /* Retrieve *ESCAPE message                                                  */
+ ESCAPE:     RCVMSG     MSGTYPE(*EXCP) MSGDTA(&ERRMSGDTA) +
+                          MSGID(&ERRMSGID) MSGF(&ERRMSGF) +
+                          SNDMSGFLIB(&ERRMSGFLIB)
+             SNDPGMMSG  MSGID(&ERRMSGID) MSGF(&ERRMSGFLIB/&ERRMSGF) +
+                          MSGDTA(&ERRMSGDTA) MSGTYPE(*ESCAPE)
+
+/* ========================================================================= */
+END:         RCLRSC
+             RMVMSG CLEAR(*ALL)
+             ENDPGM

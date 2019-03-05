@@ -1,0 +1,27 @@
+/* ================================================================ */
+/* (C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                     */
+/*                                                                  */
+/* ALL RIGHTS RESERVED                                              */
+/*                                                                  */
+/* THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED      */
+/* WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.                */
+/* NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                     */
+/* COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF               */
+/* UNICOM SYSTEMS, INC.                                             */
+/* ================================================================ */
+
+             PGM
+
+             COPYRIGHT  TEXT('(C) 2005-2009 COPYRIGHT UNICOM SYSTEMS, +
+                          INC.')
+
+/* CLP # 2 */
+/* TST 1.101A */
+
+/* TST 1.111A */
+             SNDPGMMSG  MSG('Added at TST 1.111A') TOPGMQ(*PRV (*))
+
+/* TST 1.112A */
+             SNDPGMMSG  MSG('Added at TST 1.112A') TOPGMQ(*PRV (*))
+
+             ENDPGM

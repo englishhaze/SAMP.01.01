@@ -1,0 +1,419 @@
+/* ================================================================ */
+/* Ÿ 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                       */
+/*                                                                  */
+/* ALL RIGHTS RESERVED                                              */
+/*                                                                  */
+/* THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED      */
+/* WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.                */
+/* NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                     */
+/* COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF               */
+/* UNICOM SYSTEMS, INC.                                             */
+/* ================================================================ */
+
+             PGM        PARM(&DEV &PROD &DESC &VERS &LEVL &CUTLIB &CUTFLR +
+                          &PRDLIB &PRDFLR &OLDLIB &OLDFLR &TGTRLS)
+
+             COPYRIGHT  TEXT('Ÿ 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.')
+
+/* ================================================================ */
+/* Program  : M4INSTST                                              */
+/* Author   : Paul Wren                                             */
+/* Date     : August 2000                                           */
+/*                                                                  */
+/* Synopsis : TST product install/upgrade program                   */
+/*                                                                  */
+/*            The program is called by the AS/400 product install   */
+/*            utility. The parameter list passed is extracted from  */
+/*            the database file M4PRODPF.                           */
+/*                                                                  */
+/* Interface:-                                                      */
+/*                                                                  */
+/*            &DEV    *CHAR 10       Tape device to use for RST     */
+/*            &PROD   *CHAR  3       Product code (i.e. ACA)        */
+/*            &DESC   *CHAR 30       Product description            */
+/*            &VERS   *CHAR  4       Product version 9.99           */
+/*            &LEVL   *CHAR  7       Product level 9.9999X          */
+/*            &CUTLIB *CHAR 10       Cut library                    */
+/*            &CUTFLR *CHAR 63       Cut folder                     */
+/*            &PRDLIB *CHAR 10       Product library                */
+/*            &PRDFLR *CHAR 63       Product folder                 */
+/*            &OLDLIB *CHAR 10       Old library                    */
+/*            &OLDFLR *CHAR 63       Old folder                     */
+/*            &TGTRLS *CHAR  6       Target release for saves       */
+/*                                                                  */
+/* Maintenance: September 1998 PRW                                  */
+/*              Amend install to work with *WEB distribution        */
+/*                                                                  */
+/* Maintenance: February 1999 PRW                                   */
+/*              Amend to cater for new file ACMSGXP                 */
+/*                                                                  */
+/* Maintenance: May 2009 PRW @ 1.113A                               */
+/*              Add M4INZPRD to set object ownerships and product   */
+/*              library for commands and menus.                     */
+/*                                                                  */
+/* ================================================================ */
+/*************************************************************************/
+
+             /* Declare parameter */
+             QSYS/DCL   VAR(&CMD) TYPE(*CHAR) LEN(256)
+             QSYS/DCL   VAR(&CMDLEN) TYPE(*DEC) LEN(15 5) VALUE(256)
+             QSYS/DCL   VAR(&OBJATR) TYPE(*CHAR) LEN(10)
+             QSYS/DCL   VAR(&OPTDIR) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&DEV) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&PROD) TYPE(*CHAR) LEN(3)
+             DCL        VAR(&DESC) TYPE(*CHAR) LEN(30)
+             DCL        VAR(&VERS) TYPE(*CHAR) LEN(4)
+             DCL        VAR(&LEVL) TYPE(*CHAR) LEN(7)
+             DCL        VAR(&CUTLIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&CUTFLR) TYPE(*CHAR) LEN(63)
+             DCL        VAR(&PRDLIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&PRDFLR) TYPE(*CHAR) LEN(63)
+             DCL        VAR(&OLDLIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&OLDFLR) TYPE(*CHAR) LEN(63)
+             DCL        VAR(&TGTRLS) TYPE(*CHAR) LEN(6)
+
+/* ......................................................................... */
+/* Declare work variables                                                    */
+       /* Subsystem API format */
+             QSYS/DCL   VAR(&SBSINFO) TYPE(*CHAR) LEN(38)
+       /* API error code */
+             QSYS/DCL   VAR(&ERRC) TYPE(*CHAR) LEN(16) +
+                          VALUE(X'00000010000000000000000000000000')
+       /* Subsystem name */
+             QSYS/DCL   VAR(&SBSD) TYPE(*CHAR) LEN(20)
+
+             /* Product authority space */
+             QSYS/DCL   VAR(&PRDSPC) TYPE(*CHAR) LEN(20)
+
+             QSYS/DCL   VAR(&MSGDTA) TYPE(*CHAR) LEN(132)
+
+             QSYS/DCL   VAR(&OPTION) TYPE(*CHAR) LEN(1)
+
+             QSYS/DCL   VAR(&INQMSGRPY) TYPE(*CHAR) LEN(10)
+
+       /* Current library name */
+             QSYS/DCL   VAR(&CURLIB) TYPE(*CHAR) LEN(10)
+
+/* ......................................................................... */
+/* Glocal error monitor                                                      */
+/* ......................................................................... */
+             QSYS/MONMSG MSGID(CPF0000) EXEC(QSYS/GOTO CMDLBL(ERROR))
+
+/* ......................................................................... */
+/* Perform any pre install processing here                                   */
+/* ......................................................................... */
+
+             QSYS/RTVJOBA INQMSGRPY(&INQMSGRPY)
+             QSYS/CHGJOB INQMSGRPY(*SYSRPYL)
+
+
+ M4INS01:
+             /* Check if product library exists */
+             QSYS/CHKOBJ OBJ(&PRDLIB) OBJTYPE(*LIB)
+             QSYS/MONMSG MSGID(CPF9801 CPF9810) EXEC(QSYS/DO)
+             QSYS/RCVMSG MSGTYPE(*EXCP)
+
+             /* Set install option to new install */
+             QSYS/CHGVAR VAR(&OPTION) VALUE('I')
+             QSYS/GOTO  CMDLBL(M4INS10)
+
+             QSYS/ENDDO
+
+M4INS03:
+/* ......................................................................... */
+/* Get here for upgrade checks                                               */
+/* ......................................................................... */
+
+M4INS04:
+             /* Does old product library exist ? */
+             QSYS/CHKOBJ OBJ(QSYS/&OLDLIB) OBJTYPE(*LIB)
+             QSYS/MONMSG MSGID(CPF9801 CPF9810) EXEC(QSYS/DO)
+             QSYS/RCVMSG MSGTYPE(*EXCP)
+             QSYS/GOTO   CMDLBL(M4INS05)
+             QSYS/ENDDO
+
+             QSYS/SNDPGMMSG MSGID(CPF9898) MSGF(QCPFMSG) +
+                          MSGDTA(&PROD *BCAT 'Installation: The old +
+                          library' *BCAT &OLDLIB *BCAT 'has been +
+                          found. During upgrade the existing' *BCAT +
+                          &PRDLIB *BCAT 'is renamed to' *BCAT +
+                          &OLDLIB *BCAT 'Please backup and remove +
+                          or rename the old library and try the +
+                          installation again') TOPGMQ(*PRV) +
+                          MSGTYPE(*DIAG)
+             QSYS/SNDPGMMSG MSGID(M4G9002) MSGF(M4GENMSGF) +
+                          TOPGMQ(*PRV) MSGTYPE(*ESCAPE)
+
+M4INS05:
+             QSYS/SNDPGMMSG MSGID(CPF9898) MSGF(QCPFMSG) +
+                          MSGDTA(&PROD *BCAT 'Installation: Product +
+                          library is being renamed....') +
+                          TOPGMQ(*EXT) MSGTYPE(*STATUS)
+
+       /* Make sure that product library is not current library */
+             QSYS/RTVJOBA CURLIB(&CURLIB)
+             QSYS/IF    COND(&CURLIB *EQ &PRDLIB) +
+                          THEN(QSYS/CHGCURLIB CURLIB(*CRTDFT))
+
+       /* Ensure that the product library is not on library list */
+             QSYS/RMVLIBLE LIB(&PRDLIB)
+             QSYS/MONMSG MSGID(CPF0000) EXEC(QSYS/RCVMSG +
+                          MSGTYPE(*EXCP) RMV(*YES))
+
+             QSYS/RNMOBJ OBJ(QSYS/&PRDLIB) OBJTYPE(*LIB) +
+                          NEWOBJ(&OLDLIB)
+             QSYS/MONMSG MSGID(CPF2113) EXEC(QSYS/DO)
+             QSYS/SNDPGMMSG MSGID(CPF9898) MSGF(QCPFMSG) +
+                          MSGDTA(&PROD *BCAT 'Installation: +
+                          Library' *BCAT &PRDLIB *BCAT 'is in use. +
+                          Installation aborted') TOPGMQ(*PRV) +
+                          MSGTYPE(*ESCAPE)
+             QSYS/ENDDO
+
+M4INS10:
+
+/* ......................................................................... */
+/* Restore product library                                                   */
+/* ......................................................................... */
+             QSYS/SNDPGMMSG MSGID(CPF9898) MSGF(QCPFMSG) +
+                          MSGDTA(&PROD *BCAT 'Installation: +
+                          Restoring library' *BCAT &PRDLIB *BCAT +
+                          ', Please wait....') TOPGMQ(*EXT) +
+                          MSGTYPE(*STATUS)
+
+             /* Restore product lib. from savefile if device is *SAVF */
+             IF         COND(&DEV *EQ '*SAVF     ') THEN(QSYS/DO)
+             RSTLIB     SAVLIB(&PRDLIB) DEV(*SAVF) SAVF(M4SYS/&PRDLIB) +
+                          OPTION(*ALL) MBROPT(*MATCH) +
+                          ALWOBJDIF(*NONE) RSTLIB(&PRDLIB) +
+                          RSTASP(1) OUTPUT(*NONE)
+
+             /* Check for any objects not restored */
+             QSYS/MONMSG MSGID(CPF3773) EXEC(QSYS/DO)
+             QSYS/RCVMSG MSGTYPE(*EXCP) RMV(*NO) MSGDTA(&MSGDTA)
+
+             /* Message data contains number of objects not restored in 5-8 */
+             QSYS/IF    COND(%BINARY(&MSGDTA 5 4) > 0) +
+                          THEN(QSYS/SNDPGMMSG MSGID(CPF9898) +
+                          MSGF(QSYS/QCPFMSG) MSGDTA(&PROD *BCAT +
+                          'Installation: Restore of library' *BCAT +
+                          &PRDLIB *BCAT 'fails.') MSGTYPE(*ESCAPE))
+             QSYS/ENDDO
+             QSYS/ENDDO
+
+             /* Otherwise chekc for install from web distribution */
+             QSYS/ELSE  CMD(QSYS/IF COND(&DEV *EQ '*WEB') THEN(DO))
+
+             /* restore product library from temporary save file in QTEMP */
+             RSTLIB     SAVLIB(&CUTLIB) DEV(*SAVF) +
+                          SAVF(QTEMP/&CUTLIB) OPTION(*ALL) +
+                          MBROPT(*MATCH) ALWOBJDIF(*NONE) +
+                          RSTLIB(&PRDLIB) RSTASP(1) OUTPUT(*NONE)
+
+             /* Check for any objects not restored */
+             QSYS/MONMSG MSGID(CPF3773) EXEC(QSYS/DO)
+             QSYS/RCVMSG MSGTYPE(*EXCP) RMV(*NO) MSGDTA(&MSGDTA)
+
+             /* Message data contains number of objects not restored in 5-8 */
+             QSYS/IF    COND(%BINARY(&MSGDTA 5 4) > 0) +
+                          THEN(QSYS/SNDPGMMSG MSGID(CPF9898) +
+                          MSGF(QSYS/QCPFMSG) MSGDTA(&PROD *BCAT +
+                          'Installation: Restore of library' *BCAT +
+                          &PRDLIB *BCAT 'fails.') MSGTYPE(*ESCAPE))
+             QSYS/ENDDO
+
+             /* Dump install details to data area before saving library      */
+             /* These details are only used if the old remote install method */
+             /* is used. If the M4INSPRD command is used as part of the      */
+             /* product support system then this data area is deleted in     */
+             /* favour of the specific install data supplied on the call to  */
+             /* the M4INSPRD command.                                        */
+
+             QSYS/CHKOBJ OBJ(&PRDLIB/M4INSTST) OBJTYPE(*DTAARA)
+             QSYS/MONMSG MSGID(CPF9801) EXEC(QSYS/DO)
+             QSYS/CRTDTAARA DTAARA(&PRDLIB/M4INSTST) TYPE(*CHAR) +
+                          LEN(269) TEXT('Test product install data')
+             QSYS/ENDDO
+
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (1 3)) VALUE(&PROD)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (4 30)) VALUE(&DESC)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (34 4)) VALUE(&VERS)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (38 7)) VALUE(&LEVL)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (45 10)) VALUE(&CUTLIB)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (55 63)) VALUE(&CUTFLR)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (118 10)) VALUE(&PRDLIB)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (128 63)) VALUE(&PRDFLR)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (191 10)) VALUE(&OLDLIB)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (201 63)) VALUE(&OLDFLR)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (264 6)) VALUE(&TGTRLS)
+
+             /* Scrap redundant distribution save file */
+             QSYS/DLTF  FILE(QTEMP/&CUTLIB)
+             QSYS/MONMSG MSGID(CPF0000) EXEC(RCVMSG PGMQ(*SAME) +
+                          MSGTYPE(*EXCP) RMV(*YES))
+             QSYS/ENDDO
+
+             /* Otherwise normal restore from specified device */
+             QSYS/ELSE  CMD(QSYS/DO)
+
+
+/*PG01  - Changed the RSTLIB command to be handled by QCMDEXC    */
+/*        as optical support was not available prior to V3R6M0   */
+/*        so we have to build the restore command depending on   */
+/*        the device for the restore.                            */
+/*        Commented out previous RSTLIB command                  */
+
+/* Create base command variable for restore.                     */
+             CHGVAR     VAR(&CMD) VALUE('RSTLIB SAVLIB(' *CAT +
+                          &CUTLIB *CAT ') DEV(' *CAT &DEV *CAT ') +
+                          VOL(*MOUNTED) ALWOBJDIF(*NONE) RSTLIB(' +
+                          *CAT &PRDLIB *CAT ') RSTASP(1)')
+/* Check device for restore.                                     */
+             RTVOBJD    OBJ(&DEV) OBJTYPE(*DEVD) OBJATR(&OBJATR)
+/* If device is not optical add tape parms                        */
+             IF         COND(&OBJATR *NE 'OPT') THEN(CHGVAR +
+                          VAR(&CMD) VALUE(&CMD *TCAT ' LABEL(' *CAT +
+                          &CUTLIB *CAT ') ENDOPT(*LEAVE)'))
+/* otherwise add optical support parms.                           */
+ BEGDO01:    ELSE       CMD(DO)
+/* If cut lib name is longer than 8 chars then add '.' in char 9 */
+             IF         COND(%SST(&CUTLIB 9 1) *EQ ' ') THEN(CHGVAR +
+                          VAR(&OPTDIR) VALUE(&CUTLIB))
+             ELSE       CMD(CHGVAR VAR(&OPTDIR) VALUE(%SST(&CUTLIB 1 +
+                          8) *CAT '.' *CAT %SST(&CUTLIB 9 2)))
+             CHGVAR     VAR(&CMD) VALUE(&CMD *TCAT ' OPTFILE(''/' +
+                          *CAT &OPTDIR *CAT ''')')
+ ENDDO01:    ENDDO
+/* Finally process the resotre command.                          */
+             CALL       PGM(QCMDEXC) PARM(&CMD &CMDLEN)
+
+             /* Check for any objects not restored */
+             QSYS/MONMSG MSGID(CPF3773) EXEC(QSYS/DO)
+             QSYS/RCVMSG MSGTYPE(*EXCP) RMV(*NO) MSGDTA(&MSGDTA)
+
+             /* Message data contains number of objects not restored in 5-8 */
+             QSYS/IF    COND(%BINARY(&MSGDTA 5 4) > 0) +
+                          THEN(QSYS/SNDPGMMSG MSGID(CPF9898) +
+                          MSGF(QSYS/QCPFMSG) MSGDTA(&PROD *BCAT +
+                          'Installation: Restore of library' *BCAT +
+                          &PRDLIB *BCAT 'fails.') MSGTYPE(*ESCAPE))
+             QSYS/ENDDO
+
+             /* Dump install details to data area before saving library      */
+             /* These details are only used if the old remote install method */
+             /* is used. If the M4INSPRD command is used as part of the      */
+             /* product support system then this data area is deleted in     */
+             /* favour of the specific install data supplied on the call to  */
+             /* the M4INSPRD command.                                        */
+
+             QSYS/CHKOBJ OBJ(&PRDLIB/M4INSTST) OBJTYPE(*DTAARA)
+             QSYS/MONMSG MSGID(CPF9801) EXEC(QSYS/DO)
+             QSYS/CRTDTAARA DTAARA(&PRDLIB/M4INSTST) TYPE(*CHAR) +
+                          LEN(269) TEXT('Test product install data')
+             QSYS/ENDDO
+
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (1 3)) VALUE(&PROD)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (4 30)) VALUE(&DESC)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (34 4)) VALUE(&VERS)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (38 7)) VALUE(&LEVL)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (45 10)) VALUE(&CUTLIB)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (55 63)) VALUE(&CUTFLR)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (118 10)) VALUE(&PRDLIB)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (128 63)) VALUE(&PRDFLR)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (191 10)) VALUE(&OLDLIB)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (201 63)) VALUE(&OLDFLR)
+             QSYS/CHGDTAARA DTAARA(&PRDLIB/M4INSTST (264 6)) VALUE(&TGTRLS)
+
+             QSYS/ENDDO
+
+/* ......................................................................... */
+/* Perform any post save procedures here                                     */
+/* ......................................................................... */
+
+             /*  change current library to product library */
+             QSYS/CHGCURLIB CURLIB(&PRDLIB)
+             QSYS/MONMSG MSGID(CPF0000) EXEC(RCVMSG MSGTYPE(*EXCP))
+
+       /********************************************************************/
+       /* Set ownerships and command and menu product library              */
+       /********************************************************************/
+             M4SYS/M4INZPRD LIB(&PRDLIB) FILE(*DFT)
+
+       /********************************************************************/
+       /* Restore product authority space                                  */
+       /********************************************************************/
+
+             /* If product authority space exists in &OLDLIB then restore */
+             QSYS/CHKOBJ OBJ(&OLDLIB/BTSPRD) OBJTYPE(*USRSPC)
+             QSYS/MONMSG MSGID(CPF9801 CPF9810) EXEC(QSYS/DO)
+             QSYS/RCVMSG PGMQ(*SAME *) MSGTYPE(*EXCP) RMV(*YES)
+             QSYS/GOTO  CMDLBL(NOPRDSPC)
+             QSYS/ENDDO
+
+             QSYS/DLTUSRSPC USRSPC(&PRDLIB/BTSPRD)
+             QSYS/MONMSG MSGID(CPF2105 CPF2110) EXEC(QSYS/RCVMSG +
+                          PGMQ(*SAME *) MSGTYPE(*EXCP) RMV(*YES))
+
+             QSYS/CRTDUPOBJ OBJ(BTSPRD) FROMLIB(&OLDLIB) +
+                          OBJTYPE(*USRSPC) TOLIB(&PRDLIB)
+
+NOPRDSPC:
+
+             /* Set new version in product authority space */
+             QSYS/CHGVAR VAR(&PRDSPC) VALUE('BTSPRD    ' *CAT &PRDLIB)
+             QSYS/CALL  PGM(QSYS/QUSCHGUS) PARM(&PRDSPC X'0000000C' +
+                          X'00000005' '     ' '1')
+             QSYS/CALL  PGM(QSYS/QUSCHGUS) PARM(&PRDSPC X'0000000C' +
+                          X'00000004' &VERS '1')
+             QSYS/MONMSG MSGID(CPF0000) EXEC(RCVMSG PGMQ(*SAME *) +
+                          MSGTYPE(*EXCP) RMV(*YES))
+
+             QSYS/CHGCURLIB CURLIB(*CRTDFT)
+             QSYS/MONMSG MSGID(CPF0000) EXEC(RCVMSG MSGTYPE(*EXCP))
+
+/* ......................................................................... */
+/* Return to caller                                                          */
+/* ......................................................................... */
+
+             /* For remote install send completion message */
+             QSYS/IF    COND(&DEV *EQ '*SAVF') THEN(QSYS/DO)
+             QSYS/SNDPGMMSG MSGID(CPF9898) MSGF(QSYS/QCPFMSG) +
+                          MSGDTA(&PROD *BCAT 'Installation: Remote +
+                          install completed successfully') +
+                          TOPGMQ(*PRV) MSGTYPE(*COMP)
+             QSYS/ENDDO
+
+             QSYS/CHGJOB INQMSGRPY(&INQMSGRPY)
+
+             QSYS/RETURN
+
+/* ========================================================================= */
+/* Standard error handling                                                   */
+/* ========================================================================= */
+ ERROR:
+
+             QSYS/CHGJOB INQMSGRPY(&INQMSGRPY)
+             QSYS/MONMSG MSGID(CPF0000)
+
+             QSYS/SNDPGMMSG MSGID(CPF9898) MSGF(QSYS/QCPFMSG) +
+                          MSGDTA('Install of product' *BCAT &DESC +
+                          *BCAT 'has failed - see job log') +
+                          TOPGMQ(*PRV) MSGTYPE(*DIAG)
+             QSYS/MONMSG MSGID(CPF0000)
+
+/* Move *DIAG messages - ignore any errors from API                          */
+             QSYS/CALL  PGM(QMHMOVPM) PARM('    ' '*DIAG     ' +
+                          X'00000001' '*         ' X'00000001' +
+                          X'00000010000000004040404040404040')
+             QSYS/MONMSG MSGID(CPF0000)
+
+/* ......................................................................... */
+/* Resend last *ESCAPE message to caller - ignore any errors from API        */
+             QSYS/CALL  PGM(QMHRSNEM) PARM('    ' +
+                          X'00000010000000004040404040404040')
+             QSYS/MONMSG MSGID(CPF0000)
+
+/* ========================================================================= */
+END:         RCLRSC
+             RMVMSG CLEAR(*ALL)
+             ENDPGM

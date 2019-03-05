@@ -1,0 +1,20 @@
+      * =========================================================== *
+      * Ÿ 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                  *
+      *                                                             *
+      * ALL RIGHTS RESERVED                                         *
+      *                                                             *
+      * THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED *
+      * WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.           *
+      * NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                *
+      * COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF          *
+      * UNICOM SYSTEMS, INC.                                        *
+      * =========================================================== *
+
+
+      * Test file 1
+      *
+     A          R TST1PFR
+     A            FLD1          10A
+     A            FLD2           1A
+     A            FLD3           9B 0
+     A            FLD4           3P 0

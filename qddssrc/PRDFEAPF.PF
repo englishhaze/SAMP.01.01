@@ -1,0 +1,56 @@
+      * =========================================================== *
+      * Ÿ 2005-2009 COPYRIGHT UNICOM SYSTEMS, INC.                  *
+      *                                                             *
+      * ALL RIGHTS RESERVED                                         *
+      *                                                             *
+      * THE INFORMATION CONTAINED HEREIN CONSTITUTES AN UNPUBLISHED *
+      * WORK OF UNICOM SYSTEMS, INC. ALL RIGHTS RESERVED.           *
+      * NO MATERIAL FROM THIS WORK MAY BE REPRINTED,                *
+      * COPIED, OR EXTRACTED WITHOUT WRITTEN PERMISSION OF          *
+      * UNICOM SYSTEMS, INC.                                        *
+      * =========================================================== *
+
+
+      * =============================================================
+      *                          DESCRIPTION
+      * Text         : Product Features
+      * Author       : Paul Wren
+      * Date         : 2/7/97
+      * Field Prefix : FE
+      * Options      :
+      *
+      *Z: CRTPF SIZE(*NOMAX)
+      * ..............................................................
+      *                          MAINTENANCE
+      * Programmer :
+      * Date       :
+      * Amendment  :
+      * =============================================================
+      * File level keywords
+      * ..............................................................
+     A          R PRDFEAR
+      * ..............................................................
+     A            FEPROD         3A         TEXT('Product code')
+     A                                      COLHDG('Prod.' 'Code')
+      *
+     A            FEVERS         4A         TEXT('Version 99.9')
+     A                                      COLHDG('Version')
+      *
+     A            FECODE         1A         TEXT('Feature code')
+     A                                      COLHDG('Feat.' 'Code')
+      *
+     A            FEDESR        30A         TEXT('Feature description')
+     A                                      COLHDG('Text')
+      *
+     A            FEBVAL         2P 0       TEXT('Bit index')
+     A                                      COLHDG('Bit' 'Index')
+      *
+     A            FESELC         1A         TEXT('Selected?')
+     A                                      COLHDG('Selected?')
+      * ..............................................................
+      *
+     A          K FEPROD
+     A          K FEVERS
+     A          K FECODE
+      *
+      * ==============================================================
